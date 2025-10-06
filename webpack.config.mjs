@@ -1,0 +1,82 @@
+import path from "path";
+
+import CopyPlugin from "copy-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import TerserPlugin from "terser-webpack-plugin";
+
+export default (_env, argv) => {
+  return {
+    stats: "minimal", // Keep console output easy to read.
+    entry: "./src/walkingInTheMiddleOfTheStreet.ts", 
+    // entry: "./src/main.js", 
+
+    // Your build destination
+    output: {
+      path: path.resolve(process.cwd(), "dist"),
+      filename: "bundle.js",
+      clean: true,
+    },
+
+    // Config for your testing server
+    devServer: {
+      compress: true,
+      allowedHosts: "all", // If you are using WebpackDevServer as your production server, please fix this line!
+      static: false,
+      client: {
+        logging: "warn",
+        overlay: {
+          errors: true,
+          warnings: false,
+        },
+        progress: true,
+      },
+      port: 5143,
+      host: "0.0.0.0",
+    },
+
+    // Web games are bigger than pages, disable the warnings that our game is too big.
+    performance: { hints: false },
+
+    // Enable sourcemaps while debugging
+    devtool: argv.mode === "development" ? "eval-source-map" : undefined,
+
+    // Minify the code when making a final build
+    optimization: {
+      minimize: argv.mode === "production",
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            ecma: 6,
+            compress: { drop_console: true },
+            output: { comments: false, beautify: false },
+          },
+        }),
+      ],
+    },
+
+    module: {
+      rules: [      {
+        test: /\.ts$/, // Кажи му да гледа за файлове, завършващи на .ts
+        use: 'ts-loader', // И да използва ts-loader за тях
+        exclude: /node_modules/,
+      },],
+    },
+    resolve: {
+      extensions: [".js",".ts", ".jsx"],
+    },
+
+    plugins: [
+      // Copy our static assets to the final build
+      new CopyPlugin({
+        patterns: [{ from: "public/" }],
+      }),
+
+      // Make an index.html from the template
+      new HtmlWebpackPlugin({
+        template: "./index.ejs",
+        hash: true,
+        minify: false,
+      }),
+    ],
+  };
+};
