@@ -3,8 +3,8 @@ import prettier from "eslint-plugin-prettier/recommended";
 
 export default [
   { ignores: ["dist"] },
+  js.configs.recommended,
   {
-    extends: [js.configs.recommended, prettier],
     files: ["**/*.{js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
@@ -12,4 +12,5 @@ export default [
     },
     rules: {},
   },
+  prettier,
 ];
