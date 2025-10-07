@@ -25,6 +25,7 @@ interface Bonuses {
   let ySpeed:number=4;
   let gameEnded:boolean=false;
   let menuShown = false;  
+  let spawnInterval = null
 
   const manifest = {
     bundles: [
@@ -248,28 +249,29 @@ function showMenu() {
 
 function resetGame() {
     score = 0;
-  time = 45;    gameEnded = false;
-  menuShown = false;
+    time = 45;
+    gameEnded = false;
+    menuShown = false;
   
     currentAnimation = still;
-  currentFrame = 0;
-  frameCounter = 0;
-  framesSinceLastSecond = 0;
+    currentFrame = 0;
+    frameCounter = 0;
+    framesSinceLastSecond = 0;
   
     benTweaking = 0;
-  benWatching = 0;
-  benWatchReversing = 0;
-  benStill = 0;
-  
+    benWatching = 0;
+    benWatchReversing = 0;
+    benStill = 0;
+    
     current.x = app.screen.width / 2;
-  current.y = app.screen.height / 2;
-  
+    current.y = app.screen.height / 2;
+
     activeGoodies.forEach(goodie => {
     app.stage.removeChild(goodie.sprite);
   });
-  activeGoodies.length = 0;    
+    activeGoodies.length = 0;    
     timeText.text = `${time}`;
-  timeText.position.set(app.screen.width/2-90, 20);    scoreText.text = `SCORE: ${score}`;
+    timeText.position.set(app.screen.width/2-90, 20);    scoreText.text = `SCORE: ${score}`;
   
     if (menuContainer) {
     app.stage.removeChild(menuContainer);
@@ -435,6 +437,7 @@ function resetGame() {
   const activeGoodies: Array<{ sprite: PIXI.Sprite; type: Bonuses }> = [];
 
   const spawnGoodie = () => {
+      if (gameEnded) return;  
     const type = goodieTypes[Math.floor(Math.random() * goodieTypes.length)];
     const goodie = new PIXI.Sprite(type.sprite.texture);
 
@@ -448,8 +451,8 @@ function resetGame() {
     activeGoodies.push({ sprite: goodie, type });
   };
 
-  setInterval(() => {
-    if (activeGoodies.length < maxItems) {
+  spawnInterval = setInterval(() => {
+    if (activeGoodies.length < maxItems&& !gameEnded) {
       spawnGoodie();
     }
   }, skorostZaSpawnvaneNaGoodies);
@@ -497,7 +500,7 @@ function resetGame() {
 
   let currentAnimation: PIXI.Sprite[];
 
-  app.ticker.add(() => {
+app.ticker.add((ticker) => {
   if (time <= 0 && !gameEnded) {
     gameEnded = true;
     currentAnimation = gameOver;
@@ -506,7 +509,7 @@ function resetGame() {
     timeText.text = 'GAME OVER';
     timeText.position.set(app.screen.width/3-50, app.screen.height/2);
     
-        setTimeout(() => {
+    setTimeout(() => {
       if (!menuShown) {
         showMenu();
         menuShown = true;
@@ -515,182 +518,170 @@ function resetGame() {
   }
 
   if (gameEnded) {
-    frameCounter++;
+    frameCounter += ticker.deltaTime;
     if (frameCounter > animationSpeed) {
       frameCounter = 0;
       currentFrame++;
       if (currentFrame >= gameOver.length) {
-        currentFrame = gameOver.length - 1;
+        currentFrame = gameOver.length - 1;  
       }
     }
     const sourceSprite = currentAnimation[currentFrame];
     current.texture = sourceSprite.texture;
-    return;
+    return;  
   }
-  if (gameEnded) {
-    // Animate game over once, then freeze
-    frameCounter++;
-    if (frameCounter > animationSpeed) {
-      frameCounter = 0;
-      currentFrame++;
-      if (currentFrame >= gameOver.length) {
-        currentFrame = gameOver.length - 1;  // Stop at last frame
-      }
-    }
-    const sourceSprite = currentAnimation[currentFrame];
-    current.texture = sourceSprite.texture;
-    return;  // Skip all game logic
-  }
-    else{
-    const playerBounds = current.getBounds();
-    activeGoodies.forEach((goodie, index) => {
-      const goodieBounds = goodie.sprite.getBounds();
-      const isColliding =
-        playerBounds.x < goodieBounds.x + goodieBounds.width &&
-        playerBounds.x + playerBounds.width > goodieBounds.x &&
-        playerBounds.y < goodieBounds.y + goodieBounds.height &&
-        playerBounds.y + playerBounds.height > goodieBounds.y;
-      if (isColliding) {
-        score += goodie.type.points;
-        time += goodie.type.time;
-        app.stage.removeChild(goodie.sprite);
-        activeGoodies.splice(index, 1);
-        isHappyTriggered = true;
-        benTweaking = 0;
-        benStill = 0;
-        benWatching = 0;
-        benWatchReversing = 0;
-        setTimeout(
-          () => {
-            isHappyTriggered = false;
-          },
-          50 * (1000 / 60)
-        );
-      }
-    });
-        if(score>=highscore){
-      highscore=score
-    }
-    scoreText.text = `Score: ${score}`;
-    highScoreText.text = `HI-SCORE: ${highscore}`;
 
-    if(framesSinceLastSecond>60){
-      timeText.text = time--;
-      framesSinceLastSecond=0;
-    }
-    else{
-      framesSinceLastSecond++
-    }
-
-    let desiredScale = 0.3;
-    let isMoving = false;
-
-    if (keys.right) {
-      benStill = 0;
-      benWatchReversing = 0;
-      benWatching = 0;
+  const playerBounds = current.getBounds();
+  activeGoodies.forEach((goodie, index) => {
+    const goodieBounds = goodie.sprite.getBounds();
+    const isColliding =
+      playerBounds.x < goodieBounds.x + goodieBounds.width &&
+      playerBounds.x + playerBounds.width > goodieBounds.x &&
+      playerBounds.y < goodieBounds.y + goodieBounds.height &&
+      playerBounds.y + playerBounds.height > goodieBounds.y;
+    if (isColliding) {
+      score += goodie.type.points;
+      time += goodie.type.time;
+      app.stage.removeChild(goodie.sprite);
+      activeGoodies.splice(index, 1);
+      isHappyTriggered = true;
       benTweaking = 0;
-      desiredScale *= -1;
-      if (current.x > app.screen.width - 18) {
-        current.x = 0;
-      }
-      current.x += xSpeed;
-      isMoving = true;
-    }
-
-    if (keys.left) {
       benStill = 0;
-      benWatchReversing = 0;
       benWatching = 0;
-      benTweaking = 0;
-      current.x -= xSpeed;
-      if (current.x < 18) {
-        current.x = app.screen.width;
-      }
-      isMoving = true;
-    }
-
-    if (keys.up) {
-      benStill = 0;
       benWatchReversing = 0;
-      benWatching = 0;
-      benTweaking = 0;
-      if (current.y > 60) {
-        current.y -= ySpeed;
-        isMoving = true;
-      }
-    }
-
-    if (keys.down) {
-      benStill = 0;
-      benWatchReversing = 0;
-      benWatching = 0;
-      benTweaking = 0;
-      if (current.y < app.screen.height - 60) {
-        current.y += ySpeed;
-        isMoving = true;
-      }
-    }
-
-    if (isMoving && !isHappyTriggered) {
-      currentAnimation = walk;
-      animationSpeed = 18;
-    } else if (isHappyTriggered) {
-      currentAnimation = happy;
-      animationSpeed = 18;
-    } else {
-      currentAnimation = still;
-    }
-
-    if (isHappyTriggered) {
-      currentAnimation = happy;
-      animationSpeed = 18;
-    }
-    frameCounter++;
-
-    if (frameCounter > animationSpeed) {
-      frameCounter = 0;
-      currentFrame++;
-    }
-    if (currentFrame >= currentAnimation.length) {
-      currentFrame = 0;
-    }
-
-    if (currentAnimation == still) {
-      benTweaking++;
-      if (benTweaking > 7 * 60) {
-        currentAnimation = currentMasiv;
-        benStill++;
-      }
-      if (benStill > 3 * 60) {
-        animationSpeed = 30;
-        currentAnimation = watch;
-      }
-    }
-    if (currentAnimation == watch) {
-      benWatching++;
-      if (benWatching > 1 * 60) {
-        currentAnimation = watchReverse;
-      }
-    }
-    if (currentAnimation === watchReverse) {
-      benWatchReversing++;
-      if (benWatchReversing > 1 * 60) {
-        currentAnimation = still;
-        benStill = 0;
-        benWatchReversing = 0;
-        benWatching = 0;
-        benTweaking = 0;
-        console.log();
-        animationSpeed = 18;
-      };
-    }
-
-    const sourceSprite = currentAnimation[currentFrame];
-    current.texture = sourceSprite.texture;
-    current.scale.x = sourceSprite.scale.x * desiredScale;
+      setTimeout(
+        () => {
+          isHappyTriggered = false;
+        },
+        50 * (1000 / 60)
+      );
     }
   });
+
+  if(score >= highscore) {
+    highscore = score;
+  }
+  scoreText.text = `Score: ${score}`;
+  highScoreText.text = `HI-SCORE: ${highscore}`;
+
+  framesSinceLastSecond += ticker.deltaTime;
+  if(framesSinceLastSecond >= 60) {
+    time--;
+    timeText.text = `${time}`;
+    framesSinceLastSecond = 0;
+  }
+
+  let desiredScale = 0.3;
+  let isMoving = false;
+
+  if (keys.right) {
+    benStill = 0;
+    benWatchReversing = 0;
+    benWatching = 0;
+    benTweaking = 0;
+    desiredScale *= -1;
+    if (current.x > app.screen.width - 18) {
+      current.x = 0;
+    }
+    current.x += xSpeed * ticker.deltaTime;
+    isMoving = true;
+  }
+
+  if (keys.left) {
+    benStill = 0;
+    benWatchReversing = 0;
+    benWatching = 0;
+    benTweaking = 0;
+    current.x -= xSpeed * ticker.deltaTime;
+    if (current.x < 18) {
+      current.x = app.screen.width;
+    }
+    isMoving = true;
+  }
+
+  if (keys.up) {
+    benStill = 0;
+    benWatchReversing = 0;
+    benWatching = 0;
+    benTweaking = 0;
+    if (current.y > 60) {
+      current.y -= ySpeed * ticker.deltaTime;
+      isMoving = true;
+    }
+  }
+
+  if (keys.down) {
+    benStill = 0;
+    benWatchReversing = 0;
+    benWatching = 0;
+    benTweaking = 0;
+    if (current.y < app.screen.height - 60) {
+      current.y += ySpeed * ticker.deltaTime;
+      isMoving = true;
+    }
+  }
+
+  if (isMoving && !isHappyTriggered) {
+    currentAnimation = walk;
+    animationSpeed = 18;
+  } else if (isHappyTriggered) {
+    currentAnimation = happy;
+    animationSpeed = 18;
+  } else {
+    currentAnimation = still;
+  }
+
+  if (isHappyTriggered) {
+    currentAnimation = happy;
+    animationSpeed = 18;
+  }
+  
+  frameCounter += ticker.deltaTime;
+
+  if (frameCounter > animationSpeed) {
+    frameCounter = 0;
+    currentFrame++;
+  }
+  if (currentFrame >= currentAnimation.length) {
+    currentFrame = 0;
+  }
+
+  if (currentAnimation == still) {
+    benTweaking += ticker.deltaTime;
+    if (benTweaking > 7 * 60) {
+      currentAnimation = currentMasiv;
+      benStill += ticker.deltaTime;
+    }
+    if (benStill > 3 * 60) {
+      animationSpeed = 30;
+      currentAnimation = watch;
+    }
+  }
+  
+  if (currentAnimation == watch) {
+    benWatching += ticker.deltaTime;
+    if (benWatching > 1 * 60) {
+      currentAnimation = watchReverse;
+    }
+  }
+  
+  if (currentAnimation === watchReverse) {
+    benWatchReversing += ticker.deltaTime;
+    if (benWatchReversing > 1 * 60) {
+      currentAnimation = still;
+      benStill = 0;
+      benWatchReversing = 0;
+      benWatching = 0;
+      benTweaking = 0;
+      animationSpeed = 18;
+    }
+  }
+
+  const sourceSprite = currentAnimation[currentFrame];
+  current.texture = sourceSprite.texture;
+  current.scale.x = sourceSprite.scale.x * desiredScale;
+});
+
   
 
   document.body.appendChild(app.canvas);
