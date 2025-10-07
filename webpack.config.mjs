@@ -11,7 +11,7 @@ export default (_env, argv) => {
         output: {
       path: path.resolve(process.cwd(), "dist"),
       filename: "bundle.js",
-        publicPath: '/', 
+        publicPath: '/Crack3dBunny/', 
       clean: true,
     },
 
