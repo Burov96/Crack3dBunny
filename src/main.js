@@ -4,21 +4,25 @@ import * as PIXI from "pixi.js";
 (async () => {
   //load the image
   const texture = await PIXI.Assets.load(
-    "https://i.ibb.co/qLPV9SDJ/Gemini-Generated-Image-fq3lvcfq3lvcfq3l.png"
+    "https://i.ibb.co/qLPV9SDJ/Gemini-Generated-Image-fq3lvcfq3lvcfq3l.png",
   );
 
   //custom izrezki
   //1
   const frame1Rect = new PIXI.Rectangle(80, 150, 420, 800);
-  const texture1 = new PIXI.Texture({source:texture.source, frame:frame1Rect});
-  const zayche1 = new PIXI.Sprite(texture1);
-
+  const texture1 = new PIXI.Texture({
+    source: texture.source,
+    frame: frame1Rect,
+  });
+  // const zayche1 = new PIXI.Sprite(texture1);
 
   //2
   const frame2Rect = new PIXI.Rectangle(550, 150, 450, 800);
-  const texture2 = new PIXI.Texture({source:texture.source, frame:frame2Rect});
+  const texture2 = new PIXI.Texture({
+    source: texture.source,
+    frame: frame2Rect,
+  });
   const zayche2 = new PIXI.Sprite(texture2);
-
 
   // Create a PixiJS application.
   const app = new PIXI.Application();

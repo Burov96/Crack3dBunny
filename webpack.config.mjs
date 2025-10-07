@@ -6,18 +6,22 @@ import TerserPlugin from "terser-webpack-plugin";
 
 export default (_env, argv) => {
   return {
-    stats: "minimal",     entry: "./src/walkingInTheMiddleOfTheStreet.ts", 
-    
-        output: {
+    stats: "minimal",
+    entry: "./src/walkingInTheMiddleOfTheStreet.ts",
+
+    output: {
       path: path.resolve(process.cwd(), "dist"),
       filename: "bundle.js",
-        publicPath: '/Crack3dBunny/', 
+      publicPath: "/Crack3dBunny/",
       clean: true,
     },
 
-        devServer: {
+    devServer: {
+        static: {
+    directory: path.join(process.cwd(), 'public'),
+  },
       compress: true,
-      allowedHosts: "all",       static: false,
+      allowedHosts: "all",
       client: {
         logging: "warn",
         overlay: {
@@ -30,11 +34,11 @@ export default (_env, argv) => {
       host: "0.0.0.0",
     },
 
-        performance: { hints: false },
+    performance: { hints: false },
 
-        devtool: argv.mode === "development" ? "eval-source-map" : undefined,
+    devtool: argv.mode === "development" ? "eval-source-map" : undefined,
 
-        optimization: {
+    optimization: {
       minimize: argv.mode === "production",
       minimizer: [
         new TerserPlugin({
@@ -48,20 +52,24 @@ export default (_env, argv) => {
     },
 
     module: {
-      rules: [      {
-        test: /\.ts$/,         use: 'ts-loader',         exclude: /node_modules/,
-      },],
+      rules: [
+        {
+          test: /\.ts$/,
+          use: "ts-loader",
+          exclude: /node_modules/,
+        },
+      ],
     },
     resolve: {
-      extensions: [".js",".ts", ".jsx"],
+      extensions: [".js", ".ts", ".jsx"],
     },
 
     plugins: [
-            new CopyPlugin({
+      new CopyPlugin({
         patterns: [{ from: "public/" }],
       }),
 
-            new HtmlWebpackPlugin({
+      new HtmlWebpackPlugin({
         template: "./index.ejs",
         hash: true,
         minify: false,
