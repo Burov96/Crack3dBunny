@@ -18,14 +18,18 @@ interface Bonuses {
   let boost: boolean = false;
   let score: number = 0;
   let highscore: number = 0;
-  let time: number = 5;
+  let time: number = 30;
   let framesSinceLastSecond:number=0;
   let isHappyTriggered: boolean = false;
   let xSpeed:number=5;
   let ySpeed:number=4;
   let gameEnded:boolean=false;
   let menuShown = false;  
+  let pwnd = false;  
   let spawnInterval = null
+  let orelPassedXsecondsAgo: number = 4;
+let orelPassed: boolean = false;
+let activeEagle: { sprite: PIXI.Sprite; frame: number; reachedBunnyY: boolean } | null = null;
 
   const manifest = {
     bundles: [
@@ -55,6 +59,7 @@ interface Bonuses {
           gameOver4: "https://i.ibb.co/fGTMdVvs/game-over4.png",
           gameOver5: "https://i.ibb.co/NnCJ1GhX/game-over5.png",
           gameOver6: "https://i.ibb.co/8nq3KNZn/game-over6.png",
+          orel: "https://i.ibb.co/s93fdkJG/eagle.png",
         },
       },
     ],
@@ -249,9 +254,10 @@ function showMenu() {
 
 function resetGame() {
     score = 0;
-    time = 45;
+    time = 30;
     gameEnded = false;
     menuShown = false;
+    pwnd = false;
   
     currentAnimation = still;
     currentFrame = 0;
@@ -394,6 +400,31 @@ function resetGame() {
     textures
   );
 
+  const orel = cutMultiple(
+    [
+      [0, 10, 500, 450, "orel", false],
+      [0, 490, 580, 490, "orel", true],
+      [500, 490, 580, 490, "orel", false],
+      [500, 10, 580, 450, "orel", true],
+    ],
+    textures
+  );
+
+  const spawnEagle = () => {
+  if (gameEnded || activeEagle || pwnd) return;
+
+  const eagle = new PIXI.Sprite(orel[0].texture);
+  eagle.anchor.set(0.5);
+  eagle.scale.set(0.3);
+  
+  // Spawn от максимално Y (най-високо = 0)
+  eagle.x = Math.random() * app.screen.width;
+  eagle.y = 0;
+  
+  app.stage.addChild(eagle);
+  activeEagle = { sprite: eagle, frame: 0, reachedBunnyY: false };
+};
+
   const gameOver = cutMultiple(
     [
       [0, 0, 1000, 1080, "gameOver1"],
@@ -442,7 +473,7 @@ function resetGame() {
     const goodie = new PIXI.Sprite(type.sprite.texture);
 
     goodie.anchor.set(0.5);
-    goodie.scale.set(0.13);
+    goodie.scale.set(0.2);
 
     goodie.x = Math.random() * (app.screen.width - 100) + 50;
     goodie.y = Math.random() * (app.screen.height - 100) + 50;
@@ -469,6 +500,7 @@ function resetGame() {
 
 
   renderSprite(current);
+
 
 
   interface pressed {
@@ -501,7 +533,67 @@ function resetGame() {
   let currentAnimation: PIXI.Sprite[];
 
 app.ticker.add((ticker) => {
-  if (time <= 0 && !gameEnded) {
+  const playerBounds = current.getBounds();
+
+if (activeEagle && !gameEnded) {
+  const eagle = activeEagle.sprite;
+  
+  activeEagle.frame++;
+  if (activeEagle.frame > 15) {
+    const nextOrelFrame = Math.floor(activeEagle.frame / 15) % orel.length;
+    eagle.texture = orel[nextOrelFrame].texture;
+    activeEagle.frame = 0;
+  }
+  
+  if (!activeEagle.reachedBunnyY) {
+    const dx = current.x - eagle.x;
+    const dy = current.y - eagle.y; //tva nqma da mi trqbva za sq
+    eagle.scale.x = Math.sign(dx) * Math.abs(eagle.scale.x) *-1;//obrushta mi orela v zavisimost na kude se dviji
+    eagle.x += Math.sign(dx) * 2 * ticker.deltaTime;
+    eagle.y += 5 * ticker.deltaTime;
+    
+    if (eagle.y >= current.y) {
+      activeEagle.reachedBunnyY = true;
+    }
+  } else {
+    eagle.y += 4 * ticker.deltaTime;
+  }
+  
+  if (isColliding({ sprite: eagle })) {
+    pwnd=true;
+    gameEnded = true;
+    currentAnimation = gameOver;
+    currentFrame = 0;
+    frameCounter = 0;
+    timeText.text = 'GAME OVER';
+    timeText.position.set(app.screen.width/3-50, app.screen.height/2);
+
+    setTimeout(() => {
+    if (!   menuShown) {
+        showMenu();
+        menuShown = true;
+         }
+       },    2000);
+  }
+
+  if (eagle.y >= app.screen.height) {
+    app.stage.removeChild(eagle);
+    activeEagle = null;
+    orelPassed = true;
+    
+    setTimeout(() => {
+      orelPassed = false;
+    }, orelPassedXsecondsAgo * 1000);
+    
+    const nextSpawnTime = (Math.random() * 6 + 1) * 1000;
+    setTimeout(() => {
+      spawnEagle();
+    }, nextSpawnTime);
+  }
+}
+
+  
+  if ((time <= 0) && !gameEnded) {
     gameEnded = true;
     currentAnimation = gameOver;
     currentFrame = 0;
@@ -517,7 +609,7 @@ app.ticker.add((ticker) => {
     }, 2000);
   }
 
-  if (gameEnded) {
+  if (gameEnded || pwnd) {
     frameCounter += ticker.deltaTime;
     if (frameCounter > animationSpeed) {
       frameCounter = 0;
@@ -530,16 +622,17 @@ app.ticker.add((ticker) => {
     current.texture = sourceSprite.texture;
     return;  
   }
-
-  const playerBounds = current.getBounds();
+    function isColliding(object:any):boolean{
+      //if true, it means the obejct and the bunny colide
+      const objectBounds = object.sprite.getBounds();
+      const result = playerBounds.x < objectBounds.x + objectBounds.width &&
+      playerBounds.x + playerBounds.width > objectBounds.x &&
+      playerBounds.y < objectBounds.y + objectBounds.height &&
+      playerBounds.y + playerBounds.height > objectBounds.y;
+      return result
+    }
   activeGoodies.forEach((goodie, index) => {
-    const goodieBounds = goodie.sprite.getBounds();
-    const isColliding =
-      playerBounds.x < goodieBounds.x + goodieBounds.width &&
-      playerBounds.x + playerBounds.width > goodieBounds.x &&
-      playerBounds.y < goodieBounds.y + goodieBounds.height &&
-      playerBounds.y + playerBounds.height > goodieBounds.y;
-    if (isColliding) {
+    if (isColliding(goodie)) {
       score += goodie.type.points;
       time += goodie.type.time;
       app.stage.removeChild(goodie.sprite);
@@ -683,7 +776,9 @@ app.ticker.add((ticker) => {
 });
 
   
-
+setTimeout(() => {
+  spawnEagle();
+}, 5000);
   document.body.appendChild(app.canvas);
 })();
 
