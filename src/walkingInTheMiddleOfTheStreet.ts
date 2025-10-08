@@ -15,21 +15,33 @@ interface Bonuses {
   let animationSpeed: number = 18;
   let frameCounter: number = 0;
   let currentFrame: number = 0;
-  let boost: boolean = false;
   let score: number = 0;
   let highscore: number = 0;
   let time: number = 30;
   let framesSinceLastSecond:number=0;
-  let isHappyTriggered: boolean = false;
-  let xSpeed:number=5;
   let ySpeed:number=4;
+  let xSpeed:number=5;
+  let orelPassedXsecondsAgo: number = 4;
+  let boost: boolean = false;
+  let isHappyTriggered: boolean = false;
   let gameEnded:boolean=false;
   let menuShown = false;  
+  let orelPassed: boolean = false;
   let pwnd = false;  
   let spawnInterval = null
-  let orelPassedXsecondsAgo: number = 4;
-let orelPassed: boolean = false;
-let activeEagle: { sprite: PIXI.Sprite; frame: number; reachedBunnyY: boolean } | null = null;
+  let activeEagle: { sprite: PIXI.Sprite; frame: number; reachedBunnyY: boolean } | null = null;
+  let gameMusic:HTMLAudioElement;
+  let menuMusic:HTMLAudioElement;
+
+
+  gameMusic=new Audio ('https://nu.vgmtreasurechest.com/soundtracks/bomberman-music-from/mlrdqvde/09.%20BGM1.mp3')
+  gameMusic.loop = true;
+  gameMusic.volume = 0.5;
+
+  menuMusic=new Audio ('https://nu.vgmtreasurechest.com/soundtracks/bomberman-music-from/opjzvfpj/04.%20Title.mp3')
+  menuMusic.loop = true;
+  menuMusic.volume = 0.5;
+
 
   const manifest = {
     bundles: [
@@ -534,6 +546,13 @@ function resetGame() {
 
 app.ticker.add((ticker) => {
   const playerBounds = current.getBounds();
+    if (gameEnded && !menuMusic.paused) {
+    gameMusic.pause();
+    menuMusic.play();
+  } else if (!gameEnded && !gameMusic.paused) {
+    menuMusic.pause();
+    gameMusic.play();
+  }
 
 if (activeEagle && !gameEnded) {
   const eagle = activeEagle.sprite;
