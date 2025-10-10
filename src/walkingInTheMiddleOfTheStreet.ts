@@ -6,8 +6,14 @@ interface Bonuses {
 }
 (async () => {
 
-  let skorostZaSpawnvaneNaGoodies: number = 3000;
-  let maxItems: number = 2;
+  let currentLevel = 1;
+  let skorostZaSpawnvaneNaGoodies: number ;
+  let clearGoodieTimeout:number ;
+  let maxItems: number;
+  let eagleSpeed: number;
+  let eagleChaseSpeed: number;
+  let ySpeed:number=4;
+  let xSpeed:number=5;
   let benTweaking: number = 0;
   let benWatching: number = 0;
   let benWatchReversing: number = 0;
@@ -19,21 +25,23 @@ interface Bonuses {
   let highscore: number = 0;
   let time: number = 30;
   let framesSinceLastSecond:number=0;
-  let ySpeed:number=4;
-  let xSpeed:number=5;
   let orelPassedXsecondsAgo: number = 4;
   let boost: boolean = false;
   let isHappyTriggered: boolean = false;
   let gameEnded:boolean=false;
   let menuShown = false;  
   let orelPassed: boolean = false;
+  let gameStarted: boolean = false;
+
   let pwnd = false;  
   let spawnInterval = null
   let activeEagle: { sprite: PIXI.Sprite; frame: number; reachedBunnyY: boolean } | null = null;
   let gameMusic:HTMLAudioElement;
   let menuMusic:HTMLAudioElement;
+  let currentAnimation: PIXI.Sprite[];
 
 
+//audio 
   gameMusic=new Audio ('https://nu.vgmtreasurechest.com/soundtracks/bomberman-music-from/mlrdqvde/09.%20BGM1.mp3')
   gameMusic.loop = true;
   gameMusic.volume = 0.5;
@@ -77,6 +85,30 @@ interface Bonuses {
     ],
   };
 
+  const levelConfig = {
+  1: { xSpeed: 6, ySpeed: 5, eagleSpeed: 5, eagleChaseSpeed: 2, maxItems: 2, spawnRate: 3000, timeLimit: 30, skorostZaSpawnvaneNaGoodies: 5000,clearGoodieTimeout:5000 },
+  2: { xSpeed: 7, ySpeed: 6, eagleSpeed: 6, eagleChaseSpeed: 3, maxItems: 3, spawnRate: 2500, timeLimit: 35, skorostZaSpawnvaneNaGoodies: 4000,clearGoodieTimeout:4000},
+  3: { xSpeed: 8, ySpeed: 7, eagleSpeed: 7, eagleChaseSpeed: 4, maxItems: 4, spawnRate: 2000, timeLimit: 40, skorostZaSpawnvaneNaGoodies: 3000,clearGoodieTimeout:3500 },
+  4: { xSpeed: 9, ySpeed: 8, eagleSpeed: 8, eagleChaseSpeed: 5, maxItems: 4, spawnRate: 1500, timeLimit: 45, skorostZaSpawnvaneNaGoodies: 2000,clearGoodieTimeout:3000},
+};
+
+function applyLevel(level: number) {
+  const config = levelConfig[level];
+  xSpeed = config.xSpeed;
+  ySpeed = config.ySpeed;
+  maxItems = config.maxItems;
+  skorostZaSpawnvaneNaGoodies = config.spawnRate;
+  clearGoodieTimeout = config.clearGoodieTimeout;
+  time = config.timeLimit;
+  
+  clearInterval(spawnInterval);
+  spawnInterval = setInterval(() => {
+    if (activeGoodies.length < maxItems && !gameEnded) {
+      spawnGoodie();
+    }
+  }, skorostZaSpawnvaneNaGoodies);
+}
+
   await PIXI.Assets.init({ manifest });
   const textures = await PIXI.Assets.loadBundle("game-assets");
 
@@ -90,6 +122,14 @@ interface Bonuses {
     style: {
       fontFamily: "Pixelify Sans",
       fontSize: 96,
+      fill: 0xffffff,
+    },
+  });
+    const levelText = new PIXI.Text({
+    text: `LEVEL: ${currentLevel}`,
+    style: {
+      fontFamily: "Pixelify Sans",
+      fontSize: 20,
       fill: 0xffffff,
     },
   });
@@ -111,11 +151,19 @@ interface Bonuses {
       fill: 0xffffff,
     },
   });
-
+   const titleText = new PIXI.Text({
+    text: '👾 Cracked Bunny 💀',
+    style: {
+      fontFamily: "Pixelify Sans",
+      fontSize: 96,
+      fill: 0xffffff,
+    },
+  });
   scoreText.position.set(app.screen.width/50, 10);
-  timeText.position.set(app.screen.width/2-90, 20);
+  timeText.position.set(app.screen.width/2-90, 75);
   highScoreText.position.set(app.screen.width-app.screen.width/3, 10);
-  app.stage.addChild(scoreText, highScoreText, timeText);
+  titleText.position.set(app.screen.width/4.5, 30);
+  levelText.position.set(30,app.screen.height-30);
 
 function createButton(text, x, y) {
   const btn = new PIXI.Container();
@@ -240,10 +288,9 @@ function showMenu() {
   finalScoreText.position.set(menuBg.x + menuWidth / 2, menuBg.y + 130);
   menuContainer.addChild(finalScoreText);
 
-  // Restart button - NOW CALLS resetGame()
   const restartBtn = createButton('RESTART', menuBg.x + menuWidth / 2, menuBg.y + 210);
   restartBtn.on('pointerdown', () => {
-    resetGame();  // ← Changed from location.reload()
+    resetGame(); 
   });
   menuContainer.addChild(restartBtn);
 
@@ -261,40 +308,59 @@ function showMenu() {
   menuContainer.addChild(githubBtn);
 
   app.stage.addChild(menuContainer);
+    gameMusic.volume = 0;
+    menuMusic.currentTime = 0;
+    menuMusic.volume = 0.5;
 }
 
-
 function resetGame() {
-    score = 0;
-    time = 30;
-    gameEnded = false;
-    menuShown = false;
-    pwnd = false;
-  
-    currentAnimation = still;
-    currentFrame = 0;
-    frameCounter = 0;
-    framesSinceLastSecond = 0;
-  
-    benTweaking = 0;
-    benWatching = 0;
-    benWatchReversing = 0;
-    benStill = 0;
-    
-    current.x = app.screen.width / 2;
-    current.y = app.screen.height / 2;
+  currentLevel = 1;
+  applyLevel(1);
+  score = 0;
+  time = 30;
+  gameEnded = false;
+  menuShown = false;
+  pwnd = false;
 
-    activeGoodies.forEach(goodie => {
+  if (activeEagle) {
+    app.stage.removeChild(activeEagle.sprite);
+    activeEagle = null;
+  }
+  
+  currentAnimation = still;
+  currentFrame = 0;
+  frameCounter = 0;
+  framesSinceLastSecond = 0;
+
+  benTweaking = 0;
+  benWatching = 0;
+  benWatchReversing = 0;
+  benStill = 0;
+  
+  current.x = app.screen.width / 2;
+  current.y = app.screen.height / 2;
+
+  activeGoodies.forEach(goodie => {
     app.stage.removeChild(goodie.sprite);
   });
-    activeGoodies.length = 0;    
-    timeText.text = `${time}`;
-    timeText.position.set(app.screen.width/2-90, 20);    scoreText.text = `SCORE: ${score}`;
+  activeGoodies.length = 0;
   
-    if (menuContainer) {
+  timeText.text = `${time}`;
+  timeText.position.set(app.screen.width/2-90, 75);  // 75 не 20
+  scoreText.text = `SCORE: ${score}`;
+
+  if (menuContainer) {
     app.stage.removeChild(menuContainer);
     menuContainer = null;
   }
+  
+  menuMusic.volume = 0;
+  gameMusic.currentTime = 0;
+  gameMusic.volume = 0.5;
+  
+  setTimeout(() => {
+    spawnEagle();
+  }, 5000);
 }
 
 
@@ -480,7 +546,7 @@ function resetGame() {
   const activeGoodies: Array<{ sprite: PIXI.Sprite; type: Bonuses }> = [];
 
   const spawnGoodie = () => {
-      if (gameEnded) return;  
+      if (gameEnded || !gameStarted) return;  
     const type = goodieTypes[Math.floor(Math.random() * goodieTypes.length)];
     const goodie = new PIXI.Sprite(type.sprite.texture);
 
@@ -491,8 +557,16 @@ function resetGame() {
     goodie.y = Math.random() * (app.screen.height - 100) + 50;
 
     app.stage.addChild(goodie);
-    activeGoodies.push({ sprite: goodie, type });
-  };
+
+  const goodieObj = { sprite: goodie, type };
+  activeGoodies.push(goodieObj);
+
+  setTimeout(() => {
+    app.stage.removeChild(goodie);
+    const idx = activeGoodies.indexOf(goodieObj);
+    if (idx > -1) activeGoodies.splice(idx, 1);
+  }, clearGoodieTimeout);
+};
 
   spawnInterval = setInterval(() => {
     if (activeGoodies.length < maxItems&& !gameEnded) {
@@ -511,7 +585,6 @@ function resetGame() {
   app.stage.addChildAt(background, 0);
 
 
-  renderSprite(current);
 
 
 
@@ -542,17 +615,12 @@ function resetGame() {
     if (e.key === "ArrowDown") keys.down = false;
   });
 
-  let currentAnimation: PIXI.Sprite[];
+
+
 
 app.ticker.add((ticker) => {
+    if (!gameStarted) return;
   const playerBounds = current.getBounds();
-    if (gameEnded && !menuMusic.paused) {
-    gameMusic.pause();
-    menuMusic.play();
-  } else if (!gameEnded && !gameMusic.paused) {
-    menuMusic.pause();
-    gameMusic.play();
-  }
 
 if (activeEagle && !gameEnded) {
   const eagle = activeEagle.sprite;
@@ -568,9 +636,9 @@ if (activeEagle && !gameEnded) {
     const dx = current.x - eagle.x;
     const dy = current.y - eagle.y; //tva nqma da mi trqbva za sq
     eagle.scale.x = Math.sign(dx) * Math.abs(eagle.scale.x) *-1;//obrushta mi orela v zavisimost na kude se dviji
-    eagle.x += Math.sign(dx) * 2 * ticker.deltaTime;
-    eagle.y += 5 * ticker.deltaTime;
-    
+  eagle.x += Math.sign(dx) * levelConfig[currentLevel].eagleChaseSpeed * ticker.deltaTime;
+  eagle.y += levelConfig[currentLevel].eagleSpeed * ticker.deltaTime;
+
     if (eagle.y >= current.y) {
       activeEagle.reachedBunnyY = true;
     }
@@ -675,6 +743,12 @@ if (activeEagle && !gameEnded) {
   }
   scoreText.text = `Score: ${score}`;
   highScoreText.text = `HI-SCORE: ${highscore}`;
+
+  if (score >= currentLevel * 50 && currentLevel < 4) { 
+  currentLevel++;
+  levelText.text = `LEVEL: ${currentLevel}`;
+  applyLevel(currentLevel);
+}
 
   framesSinceLastSecond += ticker.deltaTime;
   if(framesSinceLastSecond >= 60) {
@@ -793,14 +867,45 @@ if (activeEagle && !gameEnded) {
   current.texture = sourceSprite.texture;
   current.scale.x = sourceSprite.scale.x * desiredScale;
 });
+    // overlay predi start game
+  const overlay = new PIXI.Graphics();
+  overlay.beginFill(0x000000, 0.7);
+  overlay.drawRect(0, 0, app.screen.width, app.screen.height);
+  overlay.endFill();
+  app.stage.addChild(overlay);
+  
+  app.stage.addChild(titleText)
+
+const startButton = createButton('START GAME', app.screen.width / 2, app.screen.height / 1.2);
+app.stage.addChild(startButton);
+  renderSprite(current);
+
+
+startButton.on('pointerdown', () => {
+  applyLevel(1);
+  gameStarted = true;
+  app.stage.removeChild(startButton, titleText, overlay);
+  app.stage.addChild(scoreText, highScoreText, timeText, levelText);
 
   
-setTimeout(() => {
-  spawnEagle();
-}, 5000);
+  gameMusic.volume = 0;
+  menuMusic.volume = 0;
+  gameMusic.loop = true;
+  menuMusic.loop = true;
+  
+  gameMusic.play();
+  menuMusic.play();
+  
+  gameMusic.currentTime = 0;
+  gameMusic.volume = 0.5;
+  
+  setTimeout(() => {
+    spawnEagle();
+  }, 5000);
+});
+
   document.body.appendChild(app.canvas);
 })();
-
 
 
 const comments = `
