@@ -5,21 +5,23 @@
         <link rel="icon" type="image/png" href="/favicon.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="stylesheet" href="style.css">
-<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
-<script>
-  WebFont.load({
-    google: {
-      families: ['Pixelify Sans:400,700']
-    },
-    active: function() {
-    }
-  });
-</script>    <title>PixiJS - Template</title>
-</head>
+        <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+        <script>
+          WebFont.load({
+            google: {
+              families: ['Pixelify Sans:400,700', 'VT323']
+            },
+            active: function() {
+              console.log('Fonts loaded!');
+            }
+          });
+        </script>
+        <title>PixiJS - Template</title>
+    </head>
 
-<body>
-    <div id="app">
-        <div id="pixi-container"></div>
-    </div>
-</body>
+    <body>
+        <div id="app">
+            <div id="pixi-container"></div>
+        </div>
+    </body>
 </html>

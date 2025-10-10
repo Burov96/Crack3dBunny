@@ -120,16 +120,16 @@ function applyLevel(level: number) {
   const scoreText = new PIXI.Text({
     text: `SCORE: ${score}`,
     style: {
-      fontFamily: "Pixelify Sans",
-      fontSize: 96,
+      fontFamily: "VT323",
+      fontSize: app.screen.width * 0.05,
       fill: 0xffffff,
     },
   });
     const levelText = new PIXI.Text({
     text: `LEVEL: ${currentLevel}`,
     style: {
-      fontFamily: "Pixelify Sans",
-      fontSize: 20,
+      fontFamily: "VT323",
+      fontSize: app.screen.width * 0.02,
       fill: 0xffffff,
     },
   });
@@ -137,8 +137,8 @@ function applyLevel(level: number) {
   const timeText = new PIXI.Text({
     text: `${time}`,
     style: {
-      fontFamily: "Pixelify Sans",
-      fontSize: 156,
+      fontFamily: "VT323",
+      fontSize: app.screen.width * 0.1,
       fill: 0xffffff,
     },
   });
@@ -146,7 +146,7 @@ function applyLevel(level: number) {
   const highScoreText = new PIXI.Text({
     text: `HI-SCORE: ${highscore}`,
     style: {
-      fontFamily: "Pixelify Sans",
+      fontFamily: "VT323",
       fontSize: 96,
       fill: 0xffffff,
     },
@@ -154,16 +154,18 @@ function applyLevel(level: number) {
    const titleText = new PIXI.Text({
     text: '👾 Cracked Bunny 💀',
     style: {
-      fontFamily: "Pixelify Sans",
-      fontSize: 96,
+      fontFamily: "VT323",
+      fontSize: app.screen.width * 0.07,
       fill: 0xffffff,
     },
   });
-  scoreText.position.set(app.screen.width/50, 10);
-  timeText.position.set(app.screen.width/2-90, 75);
-  highScoreText.position.set(app.screen.width-app.screen.width/3, 10);
-  titleText.position.set(app.screen.width/4.5, 30);
-  levelText.position.set(30,app.screen.height-30);
+  scoreText.position.set(app.screen.width/50, app.screen.width * 0.01);
+  timeText.anchor.set(0.5, 0); 
+  timeText.position.set(app.screen.width / 2, app.screen.width * 0.075);
+  highScoreText.position.set(app.screen.width-app.screen.width/3, app.screen.width * 0.01);
+  titleText.anchor.set(0.5,0)
+  titleText.position.set(app.screen.width/2, app.screen.width * 0.09);
+  levelText.position.set(app.screen.width * 0.03,app.screen.height-app.screen.width * 0.05);
 
 function createButton(text, x, y) {
   const btn = new PIXI.Container();
@@ -182,7 +184,7 @@ function createButton(text, x, y) {
     const btnText = new PIXI.Text({
     text: text,
     style: {
-      fontFamily: 'Pixelify Sans',
+      fontFamily: 'VT323',
       fontSize: 28,
       fill: 0xffffff,
     },
@@ -217,7 +219,7 @@ function createIconButton(icon, x, y, color) {
     const iconText = new PIXI.Text({
     text: icon,
     style: {
-      fontFamily: 'Pixelify Sans',
+      fontFamily: 'VT323',
       fontSize: 20,
       fill: 0xffffff,
       fontWeight: 'bold',
@@ -265,7 +267,7 @@ function showMenu() {
   const titleText = new PIXI.Text({
     text: 'GAME OVER',
     style: {
-      fontFamily: 'Pixelify Sans',
+      fontFamily: 'VT323',
       fontSize: 48,
       fill: 0xffffff,
     },
@@ -278,7 +280,7 @@ function showMenu() {
   const finalScoreText = new PIXI.Text({
     text: `Score: ${score}\nBest: ${highscore}`,
     style: {
-      fontFamily: 'Pixelify Sans',
+      fontFamily: 'VT323',
       fontSize: 32,
       fill: 0xffd700,
       align: 'center',
@@ -653,10 +655,12 @@ if (activeEagle && !gameEnded) {
     currentFrame = 0;
     frameCounter = 0;
     timeText.text = 'GAME OVER';
-    timeText.position.set(app.screen.width/3-50, app.screen.height/2);
+    timeText.anchor.set(0.5, 0)
+    timeText.position.set(app.screen.width/2, app.screen.height/2);
 
     setTimeout(() => {
     if (!   menuShown) {
+    timeText.position.set(app.screen.width/2, app.screen.height*0.12);
         showMenu();
         menuShown = true;
          }
