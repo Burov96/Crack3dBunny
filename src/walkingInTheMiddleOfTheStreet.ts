@@ -689,9 +689,9 @@ if (activeEagle && !gameEnded) {
     currentAnimation = gameOver;
     currentFrame = 0;
     frameCounter = 0;
-    timeText.text = 'GAME OVER';
+    timeText.text = 'TIME UP!';
     timeText.position.set(app.screen.width/3-50, app.screen.height/2);
-    
+    currentLevel=1
     setTimeout(() => {
       if (!menuShown) {
         showMenu();
@@ -747,6 +747,8 @@ if (activeEagle && !gameEnded) {
   }
   scoreText.text = `Score: ${score}`;
   highScoreText.text = `HI-SCORE: ${highscore}`;
+  levelText.text = `LEVEL: ${currentLevel}`;
+
 
   if (score >= currentLevel * 50 && currentLevel < 4) { 
   currentLevel++;
