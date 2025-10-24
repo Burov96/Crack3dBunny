@@ -1,6 +1,4 @@
 import * as PIXI from "pixi.js";
-import { gsap } from "gsap";
-
 interface Bonuses {
   sprite: PIXI.Sprite;
   points: number;
@@ -60,7 +58,7 @@ interface Bonuses {
         assets: {
           background: "https://i.ibb.co/Kczwj2gw/background2editted.png",
           textureStill:
-            "https://i.ibb.co/pjsBTxyk/Gemini-Generated-Image-fq3lvcfq3lvcfq3l.png",
+            "https://i.ibb.co/qLPV9SDJ/Gemini-Generated-Image-fq3lvcfq3lvcfq3l.png",
           textureStill2: "https://i.ibb.co/MyMGn78d/still2.png",
           textureStill3: "https://i.ibb.co/Tx2hmyRH/still1.png",
           textureWalk1: "https://i.ibb.co/v4Z4RHKw/Walk1.png",
@@ -119,7 +117,7 @@ function applyLevel(level: number) {
 
 
   // upper text setting
-  const scoreBoard = new PIXI.Text({
+  const scoreText = new PIXI.Text({
     text: `SCORE: ${score}`,
     style: {
       fontFamily: "VT323",
@@ -136,36 +134,14 @@ function applyLevel(level: number) {
     },
   });
 
-
-
-
-  //trichislieto
-  const timeOnesText = new PIXI.Text({
-  text: "0",
-  style: {
-    fontFamily: "VT323",
-    fontSize: app.screen.width * 0.1,
-    fill: 0xffffff,
-  },
-});
-
-const timeTensText = new PIXI.Text({
-  text: "0",
-  style: {
-    fontFamily: "VT323",
-    fontSize: app.screen.width * 0.1,
-    fill: 0xffffff,
-  },
-});
-
-const timeHundredsText = new PIXI.Text({
-  text: "0",
-  style: {
-    fontFamily: "VT323",
-    fontSize: app.screen.width * 0.1,
-    fill: 0xffffff,
-  },
-});
+  const timeText = new PIXI.Text({
+    text: `${time}`,
+    style: {
+      fontFamily: "VT323",
+      fontSize: app.screen.width * 0.1,
+      fill: 0xffffff,
+    },
+  });
 
   const highScoreText = new PIXI.Text({
     text: `HI-SCORE: ${highscore}`,
@@ -183,20 +159,9 @@ const timeHundredsText = new PIXI.Text({
       fill: 0xffffff,
     },
   });
-  scoreBoard.position.set(app.screen.width/50, app.screen.width * 0.01);
-
-      timeHundredsText.visible=false
-      timeTensText.visible=false
-      timeOnesText.visible=false
-    timeHundredsText.anchor.set(0.5, 0);
-    timeHundredsText.position.set(app.screen.width / 2 - 60, app.screen.width * 0.075);
-  
-    timeTensText.anchor.set(0.5, 0);
-    timeTensText.position.set(app.screen.width / 2, app.screen.width * 0.075);
-
-  timeOnesText.anchor.set(0.5, 0);
-  timeOnesText.position.set(app.screen.width / 2 + 60, app.screen.width * 0.075);
-
+  scoreText.position.set(app.screen.width/50, app.screen.width * 0.01);
+  timeText.anchor.set(0.5, 0); 
+  timeText.position.set(app.screen.width / 2, app.screen.width * 0.075);
   highScoreText.position.set(app.screen.width-app.screen.width/3, app.screen.width * 0.01);
   titleText.anchor.set(0.5,0)
   titleText.position.set(app.screen.width/2, app.screen.width * 0.09);
@@ -354,7 +319,7 @@ function resetGame() {
   currentLevel = 1;
   applyLevel(1);
   score = 0;
-  time = 30; // промени от 3 на 30 (видях че си го оставил 3 :D)
+  time = 30;
   gameEnded = false;
   menuShown = false;
   pwnd = false;
@@ -382,29 +347,14 @@ function resetGame() {
   });
   activeGoodies.length = 0;
   
-  scoreBoard.text = `SCORE: ${score}`;
+  timeText.text = `${time}`;
+  timeText.position.set(app.screen.width/2-90, 75);  // 75 не 20
+  scoreText.text = `SCORE: ${score}`;
 
   if (menuContainer) {
     app.stage.removeChild(menuContainer);
     menuContainer = null;
   }
-  
-  timeDigitsEditor(true);
-  timeHundredsText.position.set(app.screen.width / 2 - 60, app.screen.width * 0.075);
-  timeTensText.position.set(app.screen.width / 2, app.screen.width * 0.075);
-  timeOnesText.position.set(app.screen.width / 2 + 60, app.screen.width * 0.075);
-
-  
-  gsap.from([timeOnesText, timeTensText, timeHundredsText], {
-    alpha: 0,
-    y: "-=30",
-    duration: 0.5,
-    stagger: 0.1,
-    ease: "power2.out",
-    onStart: () => {
-      updateTimeDisplay(time, false);
-    }
-  });
   
   menuMusic.volume = 0;
   gameMusic.currentTime = 0;
@@ -637,6 +587,9 @@ function resetGame() {
   app.stage.addChildAt(background, 0);
 
 
+
+
+
   interface pressed {
     up: boolean;
     down: boolean;
@@ -664,100 +617,8 @@ function resetGame() {
     if (e.key === "ArrowDown") keys.down = false;
   });
 
-let previousTime = 30;
-
-function updateTimeDisplay(newTime: number, isBonus: boolean = false) {
-  const oldOnes = previousTime % 10;
-  const oldTens = Math.floor((previousTime % 100) / 10);
-  const oldHundreds = Math.floor(previousTime / 100);
-  
-  const newOnes = newTime % 10;
-  const newTens = Math.floor((newTime % 100) / 10);
-  const newHundreds = Math.floor(newTime / 100);
-  
-  const direction = isBonus ? -1 : 1;
-  const yOffset = direction * 50;
-  
-  // 🎯 Дефинирай постоянните Y позиции
-  const onesOriginalY = app.screen.width * 0.075;
-  const tensOriginalY = app.screen.width * 0.075;
-  const hundredsOriginalY = app.screen.width * 0.075;
-  
-  newOnes ? timeOnesText.visible = true : timeOnesText.visible = false;
-  newTens ? timeTensText.visible = true : timeTensText.visible = false;
-  newHundreds ? timeHundredsText.visible = true : timeHundredsText.visible = false;
-
-  if (oldOnes !== newOnes) {
-    // 🎯 УБИЙ ПРЕДИШНИТЕ TWEENS
-    gsap.killTweensOf(timeOnesText);
-    
-    gsap.fromTo(timeOnesText, 
-      { y: onesOriginalY - yOffset, alpha: 0 },
-      { 
-        y: onesOriginalY,
-        alpha: 1, 
-        duration: 0.3,
-        ease: "back.out(1.7)",
-        onStart: () => {
-          timeOnesText.text = newOnes.toString();
-        }
-      }
-    );
-  }
-  
-  if (oldTens !== newTens) {
-    // 🎯 УБИЙ ПРЕДИШНИТЕ TWEENS
-    gsap.killTweensOf(timeTensText);
-    
-    gsap.fromTo(timeTensText,
-      { y: tensOriginalY - yOffset, alpha: 0 },
-      { 
-        y: tensOriginalY,
-        alpha: 1, 
-        duration: 0.3,
-        delay: 0.05,
-        ease: "back.out(1.7)",
-        onStart: () => {
-          timeTensText.text = newTens.toString();
-        }
-      }
-    );
-  }
-  
-  if (oldHundreds !== newHundreds) {
-    // 🎯 УБИЙ ПРЕДИШНИТЕ TWEENS
-    gsap.killTweensOf(timeHundredsText);
-    
-    gsap.fromTo(timeHundredsText,
-      { y: hundredsOriginalY - yOffset, alpha: 0 },
-      { 
-        y: hundredsOriginalY,
-        alpha: 1, 
-        duration: 0.3,
-        delay: 0.1,
-        ease: "back.out(1.7)",
-        onStart: () => {
-          timeHundredsText.text = newHundreds.toString();
-        }
-      }
-    );
-  }
-  
-  previousTime = newTime;
-}
 
 
-function timeDigitsEditor (show:boolean, text?:string){
-  timeOnesText.visible = show;
-  timeTensText.visible = show;
-  timeHundredsText.visible = show;
-  if(text){
-    timeTensText.visible=true;
-    timeTensText.text=text
-    timeTensText.anchor.set(0.5, 0);
-    timeTensText.position.set(app.screen.width / 2, app.screen.height / 2);
-  }
-}
 
 app.ticker.add((ticker) => {
     if (!gameStarted) return;
@@ -787,37 +648,24 @@ if (activeEagle && !gameEnded) {
     eagle.y += 4 * ticker.deltaTime;
   }
   
-if (isColliding({ sprite: eagle })) {
-  pwnd = true;
-  gameEnded = true;
-  currentAnimation = gameOver;
-  currentFrame = 0;
-  frameCounter = 0;
-  
-  timeDigitsEditor(false, "GAME OVER")
+  if (isColliding({ sprite: eagle })) {
+    pwnd=true;
+    gameEnded = true;
+    currentAnimation = gameOver;
+    currentFrame = 0;
+    frameCounter = 0;
+    timeText.text = 'GAME OVER';
+    timeText.anchor.set(0.5, 0)
+    timeText.position.set(app.screen.width/2, app.screen.height/2);
 
-  gsap.from(timeTensText, {
-    y: -100,
-    alpha: 0,
-    duration: 0.8,
-    ease: "bounce.out"
-  });
-  
-  
-  setTimeout(() => {
-    if (!menuShown) {
-      gsap.to(timeTensText, {
-        y: app.screen.height * 0.12,
-        duration: 0.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-          showMenu();
-          menuShown = true;
-        }
-      });
-    }
-  }, 2000);
-}
+    setTimeout(() => {
+    if (!   menuShown) {
+    timeText.position.set(app.screen.width/2, app.screen.height*0.12);
+        showMenu();
+        menuShown = true;
+         }
+       },    2000);
+  }
 
   if (eagle.y >= app.screen.height) {
     app.stage.removeChild(eagle);
@@ -841,29 +689,15 @@ if (isColliding({ sprite: eagle })) {
     currentAnimation = gameOver;
     currentFrame = 0;
     frameCounter = 0;
-    timeDigitsEditor(true,'TIME UP!')
-  gsap.from(timeTensText, {
-    scale: 0,
-    alpha: 0,
-    duration: 0.6,
-    ease: "back.out(2)"
-  });
-  
-  currentLevel = 1;
-  
-  setTimeout(() => {
-    if (!menuShown) {
-      gsap.to(timeTensText, {
-        y: app.screen.height * 0.12,
-        duration: 0.5,
-        ease: "power2.inOut",
-        onComplete: () => {
-          showMenu();
-          menuShown = true;
-        }
-      });
-    }
-  }, 2000);
+    timeText.text = 'TIME UP!';
+    timeText.position.set(app.screen.width/3-50, app.screen.height/2);
+    currentLevel=1
+    setTimeout(() => {
+      if (!menuShown) {
+        showMenu();
+        menuShown = true;
+      }
+    }, 2000);
   }
 
   if (gameEnded || pwnd) {
@@ -891,24 +725,7 @@ if (isColliding({ sprite: eagle })) {
   activeGoodies.forEach((goodie, index) => {
     if (isColliding(goodie)) {
       score += goodie.type.points;
-      const oldTime = time;
       time += goodie.type.time;
-
-
-      //animaciq na tochkite
-          gsap.to(scoreBoard.scale, {
-      x: 1.3,
-      y: 1.3,
-      duration: 0.15,
-      yoyo: true,
-      repeat: 1,
-      ease: "back.out(1.7)"
-    });
-
-    //animaciq na vremeto
-        if (goodie.type.time > 0) {
-      updateTimeDisplay(time, true); // true = bonus, т.е. се качва
-    }
       app.stage.removeChild(goodie.sprite);
       activeGoodies.splice(index, 1);
       isHappyTriggered = true;
@@ -928,85 +745,23 @@ if (isColliding({ sprite: eagle })) {
   if(score >= highscore) {
     highscore = score;
   }
-  scoreBoard.text = `Score: ${score}`;
+  scoreText.text = `Score: ${score}`;
   highScoreText.text = `HI-SCORE: ${highscore}`;
   levelText.text = `LEVEL: ${currentLevel}`;
 
 
-if (score >= currentLevel * 50 && currentLevel < 4) { 
-  const oldLevel = currentLevel;
+  if (score >= currentLevel * 50 && currentLevel < 4) { 
   currentLevel++;
   levelText.text = `LEVEL: ${currentLevel}`;
-  
-  // 🎯 Временен "LEVEL UP!" текст
-  const levelUpText = new PIXI.Text({
-  text: `LEVEL ${currentLevel}!`,
-  style: {
-    fontFamily: 'VT323',
-    fontSize: app.screen.width * 0.12,
-    fill: 0x00ff00,
-    stroke: {           // 🎯 stroke е обект
-      color: 0xffffff,  // цветът на stroke
-      width: 4          // debелината (не strokeThickness)
-    }
-  },
-});
-
-  levelUpText.anchor.set(0.5);
-  levelUpText.position.set(app.screen.width / 2, app.screen.height / 2);
-  levelUpText.scale.set(0);
-  app.stage.addChild(levelUpText);
-  
-  // 🎯 Timeline за цялата анимация
-  const tl = gsap.timeline();
-  
-  // Текстът изскача
-  tl.to(levelUpText.scale, {
-    x: 1.2,
-    y: 1.2,
-    duration: 0.4,
-    ease: "elastic.out(1, 0.6)"
-  })
-  // Леко се люшка
-  .to(levelUpText, {
-    rotation: 0.1,
-    duration: 0.1,
-    yoyo: true,
-    repeat: 3,
-    ease: "sine.inOut"
-  }, "-=0.2")
-  // Изчезва нагоре
-  .to(levelUpText, {
-    y: app.screen.height / 4,
-    alpha: 0,
-    duration: 0.4,
-    ease: "power2.in",
-    onComplete: () => {
-      app.stage.removeChild(levelUpText);
-    }
-  }, "+=0.3");
-  
-  // Едновременно - pulse на UI елементите
-  gsap.to([scoreBoard.scale, levelText.scale], {
-    x: 1.3,
-    y: 1.3,
-    duration: 0.2,
-    yoyo: true,
-    repeat: 1,
-    ease: "power2.inOut"
-  });
-  
   applyLevel(currentLevel);
 }
 
   framesSinceLastSecond += ticker.deltaTime;
-
-
   if(framesSinceLastSecond >= 60) {
-  time--;
-  updateTimeDisplay(time, false); // false = не е bonus, т.е. пада
-  framesSinceLastSecond = 0;
-}
+    time--;
+    timeText.text = `${time}`;
+    framesSinceLastSecond = 0;
+  }
 
   let desiredScale = 0.3;
   let isMoving = false;
@@ -1124,6 +879,7 @@ if (score >= currentLevel * 50 && currentLevel < 4) {
   overlay.drawRect(0, 0, app.screen.width, app.screen.height);
   overlay.endFill();
   app.stage.addChild(overlay);
+  
   app.stage.addChild(titleText)
 
 const startButton = createButton('START GAME', app.screen.width / 2, app.screen.height / 1.2);
@@ -1135,11 +891,7 @@ startButton.on('pointerdown', () => {
   applyLevel(1);
   gameStarted = true;
   app.stage.removeChild(startButton, titleText, overlay);
-  app.stage.addChild(scoreBoard, highScoreText, levelText);
-  app.stage.addChild(timeHundredsText, timeTensText, timeOnesText);
-  timeDigitsEditor(true);
-
-
+  app.stage.addChild(scoreText, highScoreText, timeText, levelText);
 
   
   gameMusic.volume = 0;
@@ -1162,3 +914,180 @@ startButton.on('pointerdown', () => {
 })();
 
 
+const comments = `
+  // renderSprite(morkov, 0.13, 1 + Math.random(), 1 + 1 + Math.random());
+  // renderSprite(zelka, 0.13, 1 + Math.random(), 1 + 1 + Math.random());
+  // renderSprite(qgodka, 0.13, 1 + Math.random(), 1 + 1 + Math.random());
+  // renderSprite(chasovnik, 0.13, 1 + Math.random(), 1 + 1 + Math.random());
+
+  // const happy1rSprite = cutToSprite(550, 150, 450, 900, textures.happy1r);
+  // const happy2rSprite = cutToSprite(550, 150, 450, 900, textures.happy2r);
+  // const happy43SpriteR = cutToSprite(550, 100, 450, 1000, textures.happy43);
+  // // const happy43SpriteL = cutToSprite(80, 150, 480, 800, textures.happy43, true);
+  // const happy: PIXI.Sprite[] = [
+  //   happy1rSprite,
+  //   happy2rSprite,
+  //   happy43SpriteR,
+  //   // happy43SpriteL,
+  // ];
+
+  // const watchTexture0RSprite: PIXI.Sprite = cutToSprite(
+  //   550,
+  //   150,
+  //   450,
+  //   900,textures.
+  //   watchTexture0R
+  // );
+  // const watchTexture1RSprite: PIXI.Sprite = cutToSprite(
+  //   550,
+  //   150,
+  //   450,
+  //   900,textures.
+  //   watchTexture1R
+  // );
+  // const watchTexture2RSprite: PIXI.Sprite = cutToSprite(
+  //   550,
+  //   150,
+  //   450,
+  //   900,textures.
+  //   watchTexture2R
+  // );
+  // const watchTexture4Sprite: PIXI.Sprite = cutToSprite(
+  //   550,
+  //   150,
+  //   450,
+  //   900,textures.
+  //   watchTexture4
+  // );
+  // const watchTexture4SpriteCopy: PIXI.Sprite = cutToSprite(
+  //   550,
+  //   150,
+  //   450,
+  //   900,textures.
+  //   watchTexture4
+  // );
+  // const watch: PIXI.Sprite[] = [
+  //   watchTexture0RSprite,
+  //   watchTexture1RSprite,
+  //   watchTexture2RSprite,
+  //   watchTexture4Sprite,
+  //   watchTexture4SpriteCopy,
+  // ];
+  // const watchReverse: PIXI.Sprite[] = [
+  //   watchTexture4SpriteCopy,
+  //   watchTexture4Sprite,
+  //   watchTexture2RSprite,
+  //   watchTexture1RSprite,
+  //   watchTexture0RSprite,
+  // ];
+
+  // const walkLeft1 = cutToSprite(550, 150, 450, 800, textures.textureWalk1);
+  // const walkLeft2 = cutToSprite(550, 150, 450, 800, textures.textureWalk2);
+  // const walkLeft3 = cutToSprite(550, 150, 450, 800, textures.textureWalk3);
+  // const walkLeft: PIXI.Sprite[] = [walkLeft1, walkLeft2, walkLeft3];
+
+  // // const walkRight1 = cutToSprite(80, 150, 420, 800, textures.textureWalk1);
+  // // const walkRight2 = cutToSprite(80, 150, 420, 800, textures.textureWalk2);
+  // // const walkRight3 = cutToSprite(80, 150, 420, 800, textures.textureWalk3);
+  // const walkRight1 = cutToSprite(80, 150, 420, 800, textures.textureWalk1, true);
+  // const walkRight2 = cutToSprite(80, 150, 420, 800, textures.textureWalk2, true);
+  // const walkRight3 = cutToSprite(80, 150, 420, 800, textures.textureWalk3, true);
+  // const walkRight: PIXI.Sprite[] = [walkRight1, walkRight2, walkRight3];
+
+  // const walk: PIXI.Sprite[] = [
+  //   walkLeft1,
+  //   walkLeft2,
+  //   walkLeft3,
+  //   walkRight1,
+  //   walkRight2,
+  //   walkRight3,
+  // ];
+
+  // const current2 = cutToSprite(80, 150, 420, 800, textures.textureStill);
+  // const current3 = cutToSprite(80, 150, 420, 800, textures.textureStill);
+  // const zaycheStill2 = cutToSprite(80, 150, 420, 800, textures.textureStill2);
+  // const zaycheStill3 = cutToSprite(80, 150, 420, 800, textures.textureStill3);
+  // const zaycheStill4 = cutToSprite(550, 150, 450, 800, textures.textureStill2);
+  // // const zaycheStill5 = cutToSprite(550, 150, 450, 800, textures.textureStill3);
+  // const currentMasiv: PIXI.Sprite[] = [zaycheStill1, current2, current3];
+  // const still: PIXI.Sprite[] = [
+  //   // current,
+  //   zaycheStill2,
+  //   zaycheStill3,
+  //   zaycheStill4,
+  //   // zaycheStill5,
+  // ];
+
+  // const ouch1 = cutToSprite(550, 150, 450, 800, textures.textureOuch);
+  // const ouch2 = cutToSprite(80, 150, 420, 800, textures.textureOuch);
+  // const ouch: PIXI.Sprite[] = [ouch1, ouch2];
+
+const frame1Rect = new PIXI.Rectangle(80, 150, 420, 800);
+const texture1 = new PIXI.Texture({
+      source: textureStill.source,
+      frame: frame1Rect,
+    });
+    const zayche1 = new PIXI.Sprite(texture1);
+  
+    const frame2Rect = new PIXI.Rectangle(550, 150, 450, 800);
+    const texture2 = new PIXI.Texture({
+          source: textureStill.source,
+          frame: frame2Rect,
+          });
+          const zayche2 = new PIXI.Sprite(texture2);
+          app.stage.addChild(zayche1);
+          app.stage.addChild(zayche2);
+
+          zayche1.scale.set(0.2);
+          zayche1.anchor.set(0.5);
+          zayche1.x = app.screen.width / 1.5;
+          zayche1.y = app.screen.height / 2;
+        
+          zayche2.scale.set(0.2);
+          zayche2.anchor.set(0.5);
+          zayche2.x = app.screen.width / 2;
+          zayche2.y = app.screen.height / 2;
+
+              // if (isHappy) {
+    //   currentAnimation = happy;
+    // } else if (isHurt) {
+    //   currentAnimation = ouch;
+    // } else if (isMovingRight) {
+    //   currentAnimation = walk;
+    //   desiredScale *= -1;
+    //   if (current.x > app.screen.width - 18) {
+    //     current.x = 0;
+    //   }
+    //   // current.scale.x = 0.3;
+    //   current.x += 5;
+    // } else if (isMovingLeft) {
+    //   currentAnimation = walk;
+    //   // current.scale.x = 0.3;
+    //   current.x -= 5;
+    //   if (current.x < 18) {
+    //     current.x = app.screen.width;
+    //   }
+    // }
+    // if (isMovingDown) {
+    //   if (current.y < app.screen.height - 60) {
+    //     console.log(current.y);
+    //     currentAnimation = walk;
+    //     current.y += 3;
+    //   }
+    // } else if (isMovingUp) {
+    //   if (current.y > 60) {
+    //     console.log(current.y);
+    //     currentAnimation = walk;
+    //     current.y -= 3;
+    //   }
+    // }
+
+
+      // let stayStill: boolean = false;
+  // let isMovingRight: boolean = false;
+  // let isMovingLeft: boolean = false;
+  // let isMovingUp: boolean = false;
+  // let isMovingDown: boolean = false;
+  // let isHappy: boolean = false;
+  // let isHurt: boolean = false;
+      `;
