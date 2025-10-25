@@ -40,6 +40,7 @@ interface Bonuses {
   let activeEagle: { sprite: PIXI.Sprite; frame: number; reachedBunnyY: boolean } | null = null;
   let gameMusic:HTMLAudioElement;
   let menuMusic:HTMLAudioElement;
+  let uoh:HTMLAudioElement;
   let currentAnimation: PIXI.Sprite[];
 
 
@@ -52,6 +53,9 @@ interface Bonuses {
   menuMusic.loop = true;
   menuMusic.volume = 0.5;
 
+  uoh=new Audio ('https://www.myinstants.com/media/sounds/uoh.mp3')
+  uoh.loop = false;
+  uoh.volume = 0.5;
 
   const manifest = {
     bundles: [
@@ -402,6 +406,7 @@ function resetGame() {
     stagger: 0.1,
     ease: "power2.out",
     onStart: () => {
+      previousTime = time;
       updateTimeDisplay(time, false);
     }
   });
@@ -683,7 +688,7 @@ function updateTimeDisplay(newTime: number, isBonus: boolean = false) {
   const tensOriginalY = app.screen.width * 0.075;
   const hundredsOriginalY = app.screen.width * 0.075;
   
-  newOnes ? timeOnesText.visible = true : timeOnesText.visible = false;
+  // newOnes ? timeOnesText.visible = true : timeOnesText.visible = false;
   newTens ? timeTensText.visible = true : timeTensText.visible = false;
   newHundreds ? timeHundredsText.visible = true : timeHundredsText.visible = false;
 
@@ -793,6 +798,9 @@ if (isColliding({ sprite: eagle })) {
   currentAnimation = gameOver;
   currentFrame = 0;
   frameCounter = 0;
+  uoh.currentTime = 0;
+  uoh.volume = 0.5;
+  uoh.play();
   
   timeDigitsEditor(false, "GAME OVER")
 
@@ -1138,20 +1146,29 @@ startButton.on('pointerdown', () => {
   app.stage.addChild(scoreBoard, highScoreText, levelText);
   app.stage.addChild(timeHundredsText, timeTensText, timeOnesText);
   timeDigitsEditor(true);
-
-
-
   
-  gameMusic.volume = 0;
+  previousTime = time; 
+  timeOnesText.text = (time % 10).toString();
+  timeTensText.text = Math.floor((time % 100) / 10).toString();
+  timeHundredsText.text = Math.floor(time / 100).toString();
+  
+  // Покажи нужните
+  timeOnesText.visible = true;
+  timeTensText.visible = true;
+  time >= 100? timeHundredsText.visible = true:timeHundredsText.visible=false
+
+  gameMusic.volume = 0.5;
   menuMusic.volume = 0;
   gameMusic.loop = true;
   menuMusic.loop = true;
+  uoh.volume = 0;
+  uoh.loop = false;
+
   
   gameMusic.play();
   menuMusic.play();
+  uoh.play();
   
-  gameMusic.currentTime = 0;
-  gameMusic.volume = 0.5;
   
   setTimeout(() => {
     spawnEagle();
